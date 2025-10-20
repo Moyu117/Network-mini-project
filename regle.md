@@ -1,4 +1,24 @@
-## 6. Structure et champs d’un message envoyé par le client (Client → Serveur)
+# 1.Quel service est rendu par le serveur ?
+
+Le serveur rend un service de jeu en ligne pour la bataille navale : il accepte les connexions, crée et gère les sessions, maintient l’état de référence des plateaux et des tours, applique les règles officielles du jeu, arbitre les actions et notifie les événements (démarrage, résultats des tirs, fin de partie) via un protocole applicatif textuel fiable sur TCP.
+
+# 2.Que demande le client ?
+
+Le client demande au serveur d’ouvrir une session et de l’y inscrire, d’autoriser le placement de ses navires puis de valider ses actions pendant la partie (notamment les tirs), en retour d’obtenir l’état mis à jour et les décisions d’arbitrage, et plus largement de pouvoir suivre l’évolution de la partie jusqu’à son terme.
+
+# 3.Que répondra le serveur à la demande du client ?
+
+À chaque demande du client, le serveur répond par un message explicite cohérent avec l’état courant : il confirme l’inscription et les paramètres de la session à l’initialisation, accuse réception du placement et annonce le début lorsque tous les joueurs sont prêts, renvoie pour chaque tir un verdict précis (touché, coulé ou manqué) et informe des actions adverses, puis déclare la fin avec le vainqueur et la raison.
+
+# 4.Qu’est-ce qui est donc à la charge du serveur ?
+
+Sont à la charge du serveur la logique complète du jeu et la cohérence des données : vérification des placements, gestion du tour par tour, contrôle de validité des coordonnées, calcul des résultats et des conditions de fin, synchronisation et diffusion de l’état aux clients, ainsi que la tenue simultanée de plusieurs parties sans interférences.
+
+# 5.Qui du serveur ou du client fixe les règles du jeu ?
+
+ Les règles du jeu sont fixées par le serveur, qui agit comme autorité de vérité et arbitre central ; le client ne fait que proposer des actions et afficher les informations reçues, de sorte que l’uniformité des décisions, la prévention des divergences et la reproductibilité des parties soient garanties par une implémentation unique côté serveur.
+
+# 6. Structure et champs d’un message envoyé par le client (Client → Serveur)
 
 Tous les messages sont envoyés en **UTF-8**, sous forme de texte, et se terminent par **\n**.
  Le format général est :
@@ -24,7 +44,7 @@ Chaque champ est séparé par un point-virgule `;`, et chaque paire clé-valeur 
 
 ------
 
-## 7. Structure et champs d’un message envoyé par le serveur (Serveur → Client)
+# 7. Structure et champs d’un message envoyé par le serveur (Serveur → Client)
 
 Même format que côté client :
  `COMMANDE k1=v1;k2=v2\n` (UTF-8, terminé par `\\n`)
@@ -92,7 +112,7 @@ Serveur-->>Client: FIN [vainqueur=CLIENT, raison=TOUS_COULES]
 
 # 9.Définir précisément les diagrammes qui décrivent : une partie gagnée, perdue, abandonnée par le client
 
-# 9.1 gagner
+## 9.1 gagner
 
 ```mermaid
 sequenceDiagram
@@ -114,7 +134,7 @@ Serveur-->>Client: TIR_ADV [case=...]
 end
 ```
 
-# 9.2 perdue
+## 9.2 perdue
 
 ```mermaid
 sequenceDiagram
@@ -140,7 +160,7 @@ sequenceDiagram
 
 ```
 
-# 9.3 abandonnée
+## 9.3 abandonnée
 
 ```mermaid
 sequenceDiagram
