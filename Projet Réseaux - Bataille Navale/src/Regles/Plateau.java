@@ -121,7 +121,7 @@ public class Plateau {
 			}
 			if (coule && b.isVivant()) {
 				b.setVivant(false);
-				System.out.println("Un bateau a coulé !");
+				System.out.println("Un bâteau a coulé !");
 			}
 		}
 	}

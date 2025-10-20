@@ -36,13 +36,13 @@ public class SessionJeu {
         try {
 			if (ia != null) {
 			    joueur1.sendMessage("Vous jouez contre l'ordinateur !");
-			    // logiques du jeu vs AI ici...
+			    // logiques du jeu vs IA ici...
 			    
-			    //Décider du nombre de bâteaux de la partie
-			    joueur1.sendMessage("Combien de bateaux doit compter la partie ? (maximum = 5)");
+			    //Décider du nombre de bateaux de la partie
+			    joueur1.sendMessage("Combien de bâteaux doit compter la partie ? (maximum = 5)");
 			    int nbBateaux = in.read();
 			    while(nbBateaux < 0 || nbBateaux > 5) {
-			    	joueur1.sendMessage("Nombre de bateaux non valide, veuillez réessayer : ");
+			    	joueur1.sendMessage("Nombre de bâteaux non valide, veuillez réessayer : ");
 			    	nbBateaux = in.read();
 			    }
 			    
@@ -50,35 +50,35 @@ public class SessionJeu {
 			    for(int i = 0; i < nbBateaux; i++) {
 			    	int x, y, t;
 			    	String o;
-			    	joueur1.sendMessage("Choisissez les coordonnees du " + i + 1 + "ème bateau : " );
-			    	joueur1.sendMessage("Coordonee X (entre 0 et " + plateau.getLongueur() + ": ");
+			    	joueur1.sendMessage("Choisissez les coordonnées du " + (i + 1) + "ème bateau : " );
+			    	joueur1.sendMessage("Coordonée X (entre 0 et " + plateau.getLongueur() + ": ");
 			    	x = Integer.parseInt(in.readLine());
-			    	joueur1.sendMessage("Coordonee Y (entre 0 et " + plateau.getLargeur() + ": ");
+			    	joueur1.sendMessage("Coordonée Y (entre 0 et " + plateau.getLargeur() + ": ");
 			    	y = Integer.parseInt(in.readLine());
-			    	joueur1.sendMessage("Choisissez la taille de ce bateau (entre 2 et 5) : ");
+			    	joueur1.sendMessage("Choisissez la taille de ce bâteau (entre 2 et 5) : ");
 			    	t = in.read();
-			    	joueur1.sendMessage("Orientation du bateau (uniquement 'H', 'B', 'G', 'D') :  ");
+			    	joueur1.sendMessage("Orientation du bâteau (uniquement 'H', 'B', 'G', 'D') :  ");
 			    	o = in.readLine();
 			    	
 			    	Bateau b = new Bateau(x, y, t, o);
 			    	
 			    	while(!plateau.placerBateau(b)) {
-			    		joueur1.sendMessage("Construction du bateau " + i + 1 + " impossible, veuillez reessayer");
-			    		joueur1.sendMessage("Coordonee X (entre 0 et " + plateau.getLongueur() + ": ");
+			    		joueur1.sendMessage("Construction du bâteau " + (i + 1) + " impossible, veuillez réessayer");
+			    		joueur1.sendMessage("Coordonée X (entre 0 et " + plateau.getLongueur() + ": ");
 				    	x = Integer.parseInt(in.readLine());
-				    	joueur1.sendMessage("Coordonee Y (entre 0 et " + plateau.getLargeur() + ": ");
+				    	joueur1.sendMessage("Coordonée Y (entre 0 et " + plateau.getLargeur() + ": ");
 				    	y = Integer.parseInt(in.readLine());
-				    	joueur1.sendMessage("Choisissez la taille de ce bateau (entre 2 et 5) : ");
+				    	joueur1.sendMessage("Choisissez la taille de ce bâteau (entre 2 et 5) : ");
 				    	t = in.read();
-				    	joueur1.sendMessage("Orientation du bateau (uniquement 'H', 'B', 'G', 'D') :  ");
+				    	joueur1.sendMessage("Orientation du bâteau (uniquement 'H', 'B', 'G', 'D') :  ");
 				    	o = in.readLine();
 				    	
 				    	b = new Bateau(x, y, t, o);
 			    	}
 			    	
-			    	joueur1.sendMessage("Bateau " + i + 1 + "place !" );
+			    	joueur1.sendMessage("Bâteau " + (i + 1) + "placé !" );
 			    }
-			    joueur1.sendMessage("Tous vos bateaux ont été place");
+			    joueur1.sendMessage("Tous vos bâteaux ont été placés");
 			    
 			    //placer les bateaux de l'ordinateur
 			    for(int i = 0; i < nbBateaux; i++) {
@@ -96,7 +96,7 @@ public class SessionJeu {
 			    	
 			    	Bateau b = new Bateau(x, y, t, o);
 			    	
-			    	//On teste si le bâteau généré par l'ordinateur peut être placé
+			    	//On teste si le bâteau généré par l'ordinateur peut être mis en place
 			    	while(!plateau.placerBateau(b)) {
 			    		//Si on arrive ici, la construction du bâteau généré par l'ordinateur est impossible
 			    		//On le fait recommencer jusqu'à ce que ce soit bon
@@ -108,6 +108,12 @@ public class SessionJeu {
 				    	b = new Bateau(x, y, t, o);
 			    	}
 			    }
+			    
+			    joueur1.sendMessage("L'ordinateur a placé ses bâteaux, la partie va pouvoir commencer !");
+			    
+			    /*
+			     * Déroulement entier de la partie entre le joueur1 et l'ordinateur
+			     */
 			    
 			    
 			} else {
