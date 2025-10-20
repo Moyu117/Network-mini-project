@@ -31,6 +31,7 @@ public class TestBatailleNavale {
         plateau.tirer(3, 2);
         plateau.tirer(4, 2);
         plateau.tirer(5, 5);
+        plateau.tirer(1, 1);
         plateau.afficherPlateau();
 
         if (plateau.tousLesBateauxCoules()) {

@@ -142,7 +142,7 @@ public class Plateau {
 		for (int i = 0; i < longueur; i++) {
 			System.out.print(i + " ");
 			for (int j = 0; j < largeur; j++) {
-				System.out.print(grille[i][j] + " ");
+				System.out.print(grille[j][i] + " ");
 	        }
 			System.out.println();
 		}
