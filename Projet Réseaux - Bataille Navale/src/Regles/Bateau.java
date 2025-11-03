@@ -1,86 +1,88 @@
 package Regles;
+
 import java.util.ArrayList;
+import java.util.List;
 
+/**
+ * Repr√©sente un bateau : point de d√©part (x,y), taille [2..5], orientation H/B/G/D
+ * H=haut, B=bas, G=gauche, D=droite
+ */
 public class Bateau {
-	int x, y;
-	int taille; //entre 2 et 5
-	String orientation; //H = haut, B = bas, G = gauche, D = droite
-	boolean vivant;
-	private ArrayList<int[]> positions = new ArrayList<>();
+    private int x, y;
+    private int taille;               // [2..5]
+    private char orientation;         // 'H','B','G','D'
+    private boolean[] touches;        // taille cases
+    private final List<int[]> positions = new ArrayList<>();
 
-	public Bateau(int x, int y, int taille, String orientation) {
-		if (!orientation.equals("H") && !orientation.equals("B") &&
-	            !orientation.equals("G") && !orientation.equals("D")) {
-	            throw new IllegalArgumentException("Orientation invalide : doit Ítre H, B, G ou D");
-	        }
-		else if(taille < 2 || taille > 5) {
-			throw new IllegalArgumentException("Taille invalide : doit Ítre entre 2 et 5");
-		}
-		else {
-			this.setX(x);
-			this.setY(y);
-			this.setTaille(taille);
-			this.setOrientation(orientation);
-			this.vivant = true;
-		}
-	}
-
-	public int getX() {
-		return x;
-	}
-
-	public void setX(int x) {
-		this.x = x;
-	}
-
-	public int getY() {
-		return y;
-	}
-
-	public void setY(int y) {
-		this.y = y;
-	}
-
-	public int getTaille() {
-		return taille;
-	}
-
-	public void setTaille(int taille) {
-		this.taille = taille;
-	}
-
-	public String getOrientation() {
-		return orientation;
-	}
-
-	public void setOrientation(String orientation) {
-		if (!orientation.equals("H") && !orientation.equals("B") &&
-				!orientation.equals("G") && !orientation.equals("D")) {
-				throw new IllegalArgumentException("Orientation invalide : doit Ítre H, B, G ou D");
-		 	}
-		else
-			this.orientation = orientation;
-	}
-
-	public boolean isVivant() {
-		return vivant;
-	}
-
-	public void setVivant(boolean vivant) {
-		this.vivant = vivant;
-	}
-	
-	public ArrayList<int[]> getPositions() {
-		return positions;
-	}
-
-	public void setPositions(ArrayList<int[]> positions) {
-		this.positions = positions;
-	}
-
-	@Override
-    public String toString() {
-        return "Bateau{ x =" + this.x + ", y =" + this.y + ", taille =" + this.taille + ", orientation = " + this.orientation + ", vivant = + " + this.vivant + " }";
+    public Bateau(int x, int y, int taille, String orientation) {
+        if (orientation == null || orientation.isEmpty())
+            throw new IllegalArgumentException("Orientation requise");
+        char o = Character.toUpperCase(orientation.charAt(0));
+        if (o != 'H' && o != 'B' && o != 'G' && o != 'D')
+            throw new IllegalArgumentException("Orientation invalide : H/B/G/D");
+        if (taille < 2 || taille > 5)
+            throw new IllegalArgumentException("Taille invalide (2..5)");
+        this.x = x;
+        this.y = y;
+        this.taille = taille;
+        this.orientation = o;
+        this.touches = new boolean[taille];
+        recomputePositions();
     }
 
+    private void recomputePositions() {
+        positions.clear();
+        int cx = x, cy = y;
+        for (int i = 0; i < taille; i++) {
+            positions.add(new int[]{cx, cy});
+            switch (orientation) {
+                case 'H': cy -= 1; break;
+                case 'B': cy += 1; break;
+                case 'G': cx -= 1; break;
+                case 'D': cx += 1; break;
+            }
+        }
+    }
+
+    /** Retourne l'index de la case touch√©e, -1 sinon */
+    public int indexOf(int sx, int sy) {
+        for (int i = 0; i < positions.size(); i++) {
+            int[] p = positions.get(i);
+            if (p[0] == sx && p[1] == sy) return i;
+        }
+        return -1;
+    }
+
+    /** Enregistre un tir sur (sx,sy). Retourne true si c'est un coup au but. */
+    public boolean hit(int sx, int sy) {
+        int idx = indexOf(sx, sy);
+        if (idx >= 0) {
+            touches[idx] = true;
+            return true;
+        }
+        return false;
+    }
+
+    public boolean estCoule() {
+        for (boolean t : touches) if (!t) return false;
+        return true;
+    }
+
+    public List<int[]> getPositions() { return positions; }
+    public int getTaille() { return taille; }
+    public char getOrientation() { return orientation; }
+    public int getX() { return x; }
+    public int getY() { return y; }
+
+    public void setX(int x) { this.x = x; recomputePositions(); }
+    public void setY(int y) { this.y = y; recomputePositions(); }
+    public void setOrientation(char o) {
+        this.orientation = Character.toUpperCase(o);
+        recomputePositions();
+    }
+
+    @Override
+    public String toString() {
+        return "Bateau{x=" + x + ", y=" + y + ", taille=" + taille + ", o=" + orientation + "}";
+    }
 }

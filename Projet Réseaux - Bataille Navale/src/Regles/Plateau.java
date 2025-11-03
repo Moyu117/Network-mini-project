@@ -1,152 +1,115 @@
 package Regles;
+
 import java.util.ArrayList;
+import java.util.List;
+import java.util.Random;
 
+/**
+ * Plateau de taille longueur x largeur.
+ * Convention: (x,y) où x ∈ [0..largeur-1], y ∈ [0..longueur-1]
+ * Grille stockée en [y][x].
+ */
 public class Plateau {
-	
-	private char[][] grille;
-	int largeur;
-	int longueur;
-	ArrayList<Bateau> bateaux = new ArrayList<Bateau>();
-	
-	public Plateau(int longueur, int largeur) {
-		this.grille = new char[longueur][largeur];
-		this.largeur = largeur;
-		this.longueur = longueur;
-		this.bateaux = new ArrayList<>();
-		this.initialiserPlateau(longueur, largeur);
-	}
+    private final int longueur; // rows
+    private final int largeur;  // cols
+    private final char[][] grille;   // '.' vide, 'B' bateau, 'X' touché, 'O' à l'eau
+    private final List<Bateau> bateaux = new ArrayList<>();
 
-	public int getLargeur() {
-		return largeur;
-	}
+    public Plateau(int longueur, int largeur) {
+        if (longueur <= 0 || largeur <= 0)
+            throw new IllegalArgumentException("Dimensions invalides");
+        this.longueur = longueur;
+        this.largeur = largeur;
+        this.grille = new char[longueur][largeur];
+        initialiserPlateau();
+    }
 
-	public void setLargeur(int largeur) {
-		this.largeur = largeur;
-	}
+    private void initialiserPlateau() {
+        for (int y = 0; y < longueur; y++)
+            for (int x = 0; x < largeur; x++)
+                grille[y][x] = '.';
+    }
 
-	public int getLongueur() {
-		return longueur;
-	}
+    public int getLongueur() { return longueur; }
+    public int getLargeur() { return largeur; }
+    public char[][] getGrille() { return grille; }
+    public List<Bateau> getBateaux() { return bateaux; }
 
-	public void setLongueur(int longueur) {
-		this.longueur = longueur;
-	}
+    public boolean dansPlateau(int x, int y) {
+        return x >= 0 && x < largeur && y >= 0 && y < longueur;
+    }
 
-	void initialiserPlateau(int longueur, int largeur) {
-		for(int i = 0; i < longueur; i++) {
-			for(int j = 0; j < largeur; j++) {
-				this.grille[i][j] = '-';
-			}
-		}
-	}
-	
-	Object getGrille(int longueur, int largeur) {
-		return this.grille[longueur][largeur];
-	}
-	
-	boolean verifierVieBateau(Bateau bateau) {
-		return bateau.vivant;
-	}
-	
-	public boolean placerBateau(Bateau bateau) {
-        ArrayList<int[]> positions = new ArrayList<>();
-        int x = bateau.getX();
-        int y = bateau.getY();
-
-        for (int i = 0; i < bateau.getTaille(); i++) {
-            int nx = x, ny = y;
-
-            switch (bateau.getOrientation()) {
-                case "H": ny = y - i; break;
-                case "B": ny = y + i; break;
-                case "G": nx = x - i; break;
-                case "D": nx = x + i; break;
-                default: return false;
-            }
-
-            // Vérifie les limites du plateau
-            if (nx < 0 || nx >= longueur || ny < 0 || ny >= largeur) {
-                System.out.println("Construction impossible : le bateau dépasse du plateau.");
-                return false;
-            }
-
-            // Vérifie la présence d’un autre bateau
-            if (grille[nx][ny] != '-') {
-                System.out.println("Construction impossible : case déjà occupée.");
-                return false;
-            }
-
-            positions.add(new int[]{nx, ny});
+    private boolean peutPlacer(Bateau b) {
+        for (int[] p : b.getPositions()) {
+            int x = p[0], y = p[1];
+            if (!dansPlateau(x, y)) return false;
+            if (grille[y][x] == 'B') return false;
         }
-
-        // Place le bateau
-        for (int[] pos : positions) {
-            grille[pos[0]][pos[1]] = 'B';
-        }
-        bateau.setPositions(positions);
-        bateaux.add(bateau);
         return true;
     }
-	
-	public boolean tirer(int x, int y) {
-		System.out.println("Tir en (" + x + "," + y + ")");
-		
-		if (x < 0 || x >= longueur || y < 0 || y >= largeur) {
-			System.out.println("Tir en dehors du plateau !");
-			return false;
-	    }
 
-		if (grille[x][y] == 'B') {
-			grille[x][y] = 'X';
-			System.out.println("Touché !");
-			verifierEtatBateaux();
-			return true;
-	    } else if (grille[x][y] == '-') {
-	    	grille[x][y] = 'O';
-	    	System.out.println("Manqué !");
-	    } else {
-	    	System.out.println("Cette case a déjà été visée.");
-	    }
-		return false;
-	}
+    public boolean placerBateau(Bateau b) {
+        if (!peutPlacer(b)) return false;
+        for (int[] p : b.getPositions()) {
+            grille[p[1]][p[0]] = 'B';
+        }
+        bateaux.add(b);
+        return true;
+    }
 
-	private void verifierEtatBateaux() {
-		for (Bateau b : bateaux) {
-			boolean coule = true;
-			for (int[] pos : b.getPositions()) {
-				if (grille[pos[0]][pos[1]] == 'B') {
-					coule = false;
-					break;
-				}
-			}
-			if (coule && b.isVivant()) {
-				b.setVivant(false);
-				System.out.println("Un bâteau a coulé !");
-			}
-		}
-	}
+    /** Résultat de tir : "ALREADY" | "MISS" | "HIT" | "SUNK" */
+    public String tirer(int x, int y) {
+        if (!dansPlateau(x, y)) return "MISS";
+        if (grille[y][x] == 'X' || grille[y][x] == 'O') return "ALREADY";
 
-	public boolean tousLesBateauxCoules() {
-		for (Bateau b : bateaux) {
-			if (b.isVivant()) return false;
-		}
-		return true;
-	}
+        if (grille[y][x] == 'B') {
+            // Trouver le bateau touché
+            for (Bateau b : bateaux) {
+                if (b.indexOf(x, y) >= 0) {
+                    b.hit(x, y);
+                    grille[y][x] = 'X';
+                    return b.estCoule() ? "SUNK" : "HIT";
+                }
+            }
+            // fallback (devrait pas arriver)
+            grille[y][x] = 'X';
+            return "HIT";
+        } else {
+            grille[y][x] = 'O';
+            return "MISS";
+        }
+    }
 
-	public void afficherPlateau() {
-		System.out.print("  ");
-		for (int j = 0; j < largeur; j++) {
-			System.out.print(j + " ");
-		}
-		System.out.println();
+    public boolean tousLesBateauxCoules() {
+        for (Bateau b : bateaux) if (!b.estCoule()) return false;
+        return true;
+    }
 
-		for (int i = 0; i < longueur; i++) {
-			System.out.print(i + " ");
-			for (int j = 0; j < largeur; j++) {
-				System.out.print(grille[j][i] + " ");
-	        }
-			System.out.println();
-		}
-	}
+    /** Placement aléatoire d'une flotte, par ex. {5,4,3,3,2} */
+    public void placerFlotteAleatoire(int[] tailles) {
+        Random r = new Random();
+        for (int t : tailles) {
+            boolean ok = false;
+            for (int tries = 0; tries < 1000 && !ok; tries++) {
+                int x = r.nextInt(largeur);
+                int y = r.nextInt(longueur);
+                char[] os = {'H','B','G','D'};
+                char o = os[r.nextInt(os.length)];
+                Bateau b = new Bateau(x, y, t, String.valueOf(o));
+                if (placerBateau(b)) ok = true;
+            }
+            if (!ok) throw new IllegalStateException("Impossible de placer la flotte aléatoire");
+        }
+    }
 
+    public void afficherPlateau() {
+        System.out.print("   ");
+        for (int x = 0; x < largeur; x++) System.out.print(x + " ");
+        System.out.println();
+        for (int y = 0; y < longueur; y++) {
+            System.out.printf("%2d ", y);
+            for (int x = 0; x < largeur; x++) System.out.print(grille[y][x] + " ");
+            System.out.println();
+        }
+    }
 }
