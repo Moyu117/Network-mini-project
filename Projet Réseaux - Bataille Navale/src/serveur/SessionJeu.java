@@ -23,10 +23,13 @@ public class SessionJeu {
     private final Plateau p2;
     private volatile boolean gameOver = false;
     private volatile ClientHandler current;
+    private volatile JoueurIA ia;
+    private boolean modeIA = false;
 
     private static final int SIZE = 10;
     private static final int[] FLEET = {5, 4, 3, 3, 2};
 
+    //Mode PVP
     public SessionJeu(ClientHandler a, ClientHandler b) {
         this.j1 = a; this.j2 = b;
         this.p1 = new Plateau(SIZE, SIZE);
@@ -34,6 +37,17 @@ public class SessionJeu {
         // 绑定
         j1.setSession(this);
         j2.setSession(this);
+    }
+    
+    //Mode PVE
+    public SessionJeu(ClientHandler joueur) {
+        this.j1 = joueur;
+        this.j2 = null;
+        this.p1 = new Plateau(SIZE, SIZE);
+        this.p2 = null;
+        this.modeIA = true;
+        joueur.setSession(this);
+        startIA();
     }
 
     /** Rejoignez l'équipe et essayez de faire correspondre */
@@ -45,13 +59,13 @@ public class SessionJeu {
             ClientHandler b = LISTE_ATTENTE.poll();
             if (a != null && b != null) {
                 SessionJeu s = new SessionJeu(a, b);
-                s.start();
+                s.startPVP();
             }
         }
     }
 
     /** Début: formation aléatoire, tirage au sort en premier, notification aux deux parties */
-    private synchronized void start() {
+    private synchronized void startPVP() {
         p1.placerFlotteAleatoire(FLEET);
         p2.placerFlotteAleatoire(FLEET);
 
@@ -63,6 +77,18 @@ public class SessionJeu {
         current = new Random().nextBoolean() ? j1 : j2;
         broadcast("GAME_START");
         promptTurn();
+    }
+
+    /** Début: formation aléatoire, j1 en premier, notification uniquement à j1 */
+    private synchronized void startIA() {
+    	 p1.placerFlotteAleatoire(FLEET);
+    	 ia = new JoueurIA(SIZE, SIZE, FLEET);
+
+    	 j1.sendMessage("MATCHED IA");
+    	 j1.sendMessage("BOARD_SIZE " + SIZE + " " + SIZE);
+    	 j1.sendMessage("GAME_START");
+    	 current = j1;
+    	 j1.sendMessage("YOUR_TURN");
     }
 
     private void broadcast(String msg) {
@@ -107,6 +133,24 @@ public class SessionJeu {
     }
 
     private void processShot(ClientHandler shooter, int x, int y) {
+    	//Mode PVE
+    	if (modeIA) {
+            Plateau cible = ia.getPlateau();
+            String res = cible.tirer(x, y);
+
+            j1.sendMessage("RESULT " + res + " " + x + " " + y);
+            if (cible.tousLesBateauxCoules()) {
+                j1.sendMessage("YOU_WIN");
+                gameOver = true;
+                return;
+            }
+
+            // Tour de l’IA
+            jouerTourIA();
+            return;
+        }
+    	
+    	//Mode PVP
         ClientHandler defender = (shooter == j1) ? j2 : j1;
         Plateau target = (shooter == j1) ? p2 : p1;
 
@@ -145,6 +189,23 @@ public class SessionJeu {
     private void swapTurn() {
         current = (current == j1) ? j2 : j1;
         promptTurn();
+    }
+    
+    private void jouerTourIA() {
+        if (gameOver) return;
+        int[] tir = ia.choisirCible();
+        int x = tir[0], y = tir[1];
+        String res = p1.tirer(x, y);
+        j1.sendMessage("OPPONENT_" + res + " " + x + " " + y);
+
+        if (p1.tousLesBateauxCoules()) {
+            j1.sendMessage("YOU_LOSE");
+            gameOver = true;
+            return;
+        }
+
+        // Retour au joueur
+        j1.sendMessage("YOUR_TURN");
     }
 
     /** Déconnexion: l'autre côté gagne et termine directement */

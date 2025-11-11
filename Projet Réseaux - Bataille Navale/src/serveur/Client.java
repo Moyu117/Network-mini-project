@@ -36,7 +36,7 @@ public class Client {
                         System.out.println("[Serveur] " + line);
                     }
                 } catch (IOException e) {
-                    System.out.println("❌ Déconnecté du serveur.");
+                    System.out.println("Déconnecté du serveur.");
                 }
             });
             receiveThread.setDaemon(true);

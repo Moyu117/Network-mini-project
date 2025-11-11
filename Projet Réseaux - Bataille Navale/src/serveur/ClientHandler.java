@@ -56,8 +56,25 @@ public class ClientHandler implements Runnable {
                         nomJoueur = parts[1].trim();
                         sendMessage("HELLO " + nomJoueur);
                         sendMessage("Type SHOT x y when your game starts.");
-                        // Rejoindre la file d'attente correspondante
-                        SessionJeu.enqueue(this);
+                        
+                        sendMessage("What gamemode ? IA or PVP");
+                        String gamemode;
+                        if((gamemode = in.readLine()) != null) {
+                        	gamemode = gamemode.trim();
+                        	if(gamemode.isEmpty()) continue;
+                        	if(gamemode.toUpperCase().startsWith("PVP")) {
+                        		 // Rejoindre la file d'attente correspondante
+                                SessionJeu.enqueue(this);
+                                continue;
+                        	}
+                        	else if(gamemode.toUpperCase().startsWith("IA")) {
+                        	    SessionJeu partieIA = new SessionJeu(this);
+                        	    continue;
+                        	}
+                        	continue;
+                        }
+                        
+                        
                     } else {
                         sendMessage("ERROR Name required. Usage: NAME <nickname>");
                     }

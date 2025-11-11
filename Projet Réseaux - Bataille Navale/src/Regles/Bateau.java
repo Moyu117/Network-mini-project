@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Représente un bateau : point de départ (x,y), taille [2..5], orientation H/B/G/D
+ * Represente un bateau : point de depart (x,y), taille [2..5], orientation H/B/G/D
  * H=haut, B=bas, G=gauche, D=droite
  */
 public class Bateau {
@@ -44,7 +44,7 @@ public class Bateau {
         }
     }
 
-    /** Retourne l'index de la case touchée, -1 sinon */
+    /** Retourne l'index de la case touchee, -1 sinon */
     public int indexOf(int sx, int sy) {
         for (int i = 0; i < positions.size(); i++) {
             int[] p = positions.get(i);
