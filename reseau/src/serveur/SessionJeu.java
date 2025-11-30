@@ -11,8 +11,8 @@ public class SessionJeu {
     private enum Phase { PLACEMENT, RUNNING, OVER }
 
     private final ClientHandler j1, j2;
-    private final Plateau p1 = new Plateau(10, 10);
-    private final Plateau p2 = new Plateau(10, 10);
+    private volatile Plateau p1 = new Plateau(10, 10);
+    private volatile Plateau p2 = new Plateau(10, 10);
 
     private volatile ClientHandler current;
     private volatile Phase phase = Phase.PLACEMENT;
@@ -23,13 +23,42 @@ public class SessionJeu {
 
     private final Map<ClientHandler, Map<Integer, Integer>> remaining = new HashMap<>();
     private final Set<ClientHandler> readySet = new HashSet<>();
+    
+    private volatile JoueurIA ia;
+    private boolean modeIA = false;
+    private Map<Integer, Integer> remainingIA = new HashMap<>();
 
+    //Mode PVP
     public SessionJeu(ClientHandler a, ClientHandler b) {
         this.j1 = a; this.j2 = b;
+        p1 = new Plateau(SIZE, SIZE);
+        p2 = new Plateau(SIZE, SIZE);
         j1.setSession(this);
         j2.setSession(this);
         remaining.put(j1, fleetBag());
         remaining.put(j2, fleetBag());
+    }
+    
+    //Mode PVE
+    public SessionJeu(ClientHandler joueur) {
+    	 this.j1 = joueur;
+    	 this.j2 = null;
+    	 this.p1 = new Plateau(SIZE, SIZE);
+    	 this.p2 = null;
+    	 this.modeIA = true;
+
+    	 // attacher la session au client
+    	 j1.setSession(this);
+
+    	 // initialiser le sac des bateaux pour le joueur humain
+    	 remaining.put(j1, fleetBag());
+
+    	 // initialiser l'IA et sa flotte
+    	 ia = new JoueurIA(SIZE, SIZE, FLEET);
+    	 remainingIA = fleetBag();
+
+    	 // lancer la phase de placement (l'IA placera automatiquement sa flotte dans startIA)
+    	 startIA();
     }
 
     private Map<Integer, Integer> fleetBag() {
@@ -44,11 +73,11 @@ public class SessionJeu {
         if (LISTE_ATTENTE.size() >= 2) {
             ClientHandler a = LISTE_ATTENTE.poll();
             ClientHandler b = LISTE_ATTENTE.poll();
-            if (a != null && b != null) new SessionJeu(a, b).start();
+            if (a != null && b != null) new SessionJeu(a, b).startPVP();
         }
     }
 
-    private synchronized void start() {
+    private synchronized void startPVP() {
         j1.sendMessage("MATCHED " + j2.getNomJoueur());
         j2.sendMessage("MATCHED " + j1.getNomJoueur());
         j1.sendMessage("BOARD_SIZE " + SIZE + " " + SIZE);
@@ -56,6 +85,29 @@ public class SessionJeu {
         j1.sendMessage("PLACE_FLEET 5,4,3,3,2");
         j2.sendMessage("PLACE_FLEET 5,4,3,3,2");
         phase = Phase.PLACEMENT;
+    }
+    
+    /** Début: formation aléatoire, j1 en premier, notification uniquement à j1 */
+    private synchronized void startIA() {
+    	// IA doit avoir un plateau et sa flotte placée automatiquement
+        if (ia == null) {
+            ia = new JoueurIA(SIZE, SIZE, FLEET);
+        }
+        // placer la flotte IA sur son plateau
+        ia.getPlateau().placerFlotteAleatoire(FLEET);
+
+        // notifier le joueur humain
+        j1.sendMessage("MATCHED IA");
+        j1.sendMessage("BOARD_SIZE " + SIZE + " " + SIZE);
+        j1.sendMessage("PLACE_FLEET 5,4,3,3,2");
+
+        phase = Phase.PLACEMENT;
+    	 
+    	 /*
+    	 j1.sendMessage("GAME_START");
+    	 current = j1;
+    	 j1.sendMessage("YOUR_TURN");
+    	 */
     }
 
     private void broadcast(String msg) { j1.sendMessage(msg); j2.sendMessage(msg); }
@@ -101,6 +153,7 @@ public class SessionJeu {
     }
 
     private void handlePlace(ClientHandler from, String[] parts) {
+    	from.sendMessage("DEBUG PLACE PARTS = " + Arrays.toString(parts));
         if (parts.length < 5) { from.sendMessage("ERROR Usage: PLACE x y size dir"); return; }
         try {
             int x = Integer.parseInt(parts[1]);
@@ -110,6 +163,10 @@ public class SessionJeu {
             if ("HBGD".indexOf(dir) < 0) { from.sendMessage("ERROR dir must be H/B/G/D"); return; }
 
             Map<Integer, Integer> bag = remaining.get(from);
+            if (bag == null) {
+                from.sendMessage("ERROR Internal: no fleet bag found");
+                return;
+            }
             int left = bag.getOrDefault(size, 0);
             if (left <= 0) { from.sendMessage("ERROR No remaining ship of size " + size); return; }
 
@@ -133,12 +190,12 @@ public class SessionJeu {
     }
 
     private void handleReset(ClientHandler from) {
-        // 清空该玩家棋盘与剩余清单，并撤销 READY
+        // æ¸…ç©ºè¯¥çŽ©å®¶æ£‹ç›˜ä¸Žå‰©ä½™æ¸…å�•ï¼Œå¹¶æ’¤é”€ READY
         Plateau p = boardOf(from);
-        // 重新创建一个空盘（简单做法：用反射不到位，这里直接逐格清空）
-        // 更简单：用新对象替代 —— 但我们有 final。那就逐格“重置”：新建并复制引用。
+        // é‡�æ–°åˆ›å»ºä¸€ä¸ªç©ºç›˜ï¼ˆç®€å�•å�šæ³•ï¼šç”¨å��å°„ä¸�åˆ°ä½�ï¼Œè¿™é‡Œç›´æŽ¥é€�æ ¼æ¸…ç©ºï¼‰
+        // æ›´ç®€å�•ï¼šç”¨æ–°å¯¹è±¡æ›¿ä»£ â€”â€” ä½†æˆ‘ä»¬æœ‰ finalã€‚é‚£å°±é€�æ ¼â€œé‡�ç½®â€�ï¼šæ–°å»ºå¹¶å¤�åˆ¶å¼•ç”¨ã€‚
         if (from == j1) {
-            // 重置 p1
+            // é‡�ç½® p1
             for (int y = 0; y < 10; y++)
                 for (int x = 0; x < 10; x++)
                     p1.getGrille()[y][x] = '.';
@@ -156,11 +213,22 @@ public class SessionJeu {
     }
 
     private void tryStartBattleIfBothReady() {
-        if (readySet.contains(j1) && readySet.contains(j2) && phase == Phase.PLACEMENT) {
-            phase = Phase.RUNNING;
-            current = new Random().nextBoolean() ? j1 : j2;
-            broadcast("GAME_START");
-            promptTurn();
+    	if (!modeIA) {
+            // PVP
+            if (readySet.contains(j1) && readySet.contains(j2) && phase == Phase.PLACEMENT) {
+                phase = Phase.RUNNING;
+                current = new Random().nextBoolean() ? j1 : j2;
+                broadcast("GAME_START");
+                promptTurn();
+            }
+        } else {
+            // PVE
+            if (readySet.contains(j1) && phase == Phase.PLACEMENT) {
+                phase = Phase.RUNNING;
+                current = j1; // joueur commence
+                j1.sendMessage("GAME_START");
+                j1.sendMessage("YOUR_TURN");
+            }
         }
     }
 
@@ -170,6 +238,24 @@ public class SessionJeu {
     }
 
     private void processShot(ClientHandler shooter, int x, int y) {
+    	//Mode PVE
+    	if (modeIA) {
+            Plateau cible = ia.getPlateau();
+            String res = cible.tirer(x, y);
+
+            j1.sendMessage("RESULT " + res + " " + x + " " + y);
+            if (cible.tousLesBateauxCoules()) {
+                j1.sendMessage("YOU_WIN");
+                gameOver = true;
+                return;
+            }
+
+            // Tour de l’IA
+            jouerTourIA();
+            return;
+        }
+    	
+    	//Mode PVP
         ClientHandler defender = opponentOf(shooter);
         Plateau target = enemyBoardOf(shooter);
 
@@ -207,6 +293,23 @@ public class SessionJeu {
     private void swapTurn() {
         current = (current == j1) ? j2 : j1;
         promptTurn();
+    }
+    
+    private void jouerTourIA() {
+        if (gameOver) return;
+        int[] tir = ia.choisirCible();
+        int x = tir[0], y = tir[1];
+        String res = p1.tirer(x, y);
+        j1.sendMessage("OPPONENT_" + res + " " + x + " " + y);
+
+        if (p1.tousLesBateauxCoules()) {
+            j1.sendMessage("YOU_LOSE");
+            gameOver = true;
+            return;
+        }
+
+        // Retour au joueur
+        j1.sendMessage("YOUR_TURN");
     }
 
     public synchronized void onDisconnect(ClientHandler who) {

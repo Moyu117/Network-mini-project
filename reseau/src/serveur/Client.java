@@ -18,7 +18,7 @@ public class Client extends JFrame {
     private final BoardPanel myBoard = new BoardPanel(true);
     private final BoardPanel enemyBoard = new BoardPanel(false);
     private final JLabel status = new JLabel("Bienvenue");
-    private final JButton rotateBtn = new JButton("Orientation: D (右)");
+    private final JButton rotateBtn = new JButton("Orientation: D");
     private final JButton resetBtn = new JButton("Réinitialiser l'emplacement");
     private final JButton readyBtn = new JButton("complet et prêt");
 
@@ -32,6 +32,7 @@ public class Client extends JFrame {
     private boolean placementPending = false;
     private int pendX, pendY, pendSize;
     private char pendOri;
+    private String mode = "PVP"; // PVP par défaut
 
     public Client() {
         super("Bataille Navale - Client");
@@ -62,7 +63,7 @@ public class Client extends JFrame {
             fleetIndex = 0;
             placementPending = false;
             status.setText("Dégagé, repositionné avec taille " + fleet[fleetIndex] + " navire de guerre");
-            if (out != null) out.println("RESET");   // 🔧 通知服务器同步重置
+            if (out != null) out.println("RESET");   // ðŸ”§ é€šçŸ¥æœ�åŠ¡å™¨å�Œæ­¥é‡�ç½®
         });
 
         readyBtn.addActionListener(e -> {
@@ -78,17 +79,17 @@ public class Client extends JFrame {
 
         myBoard.setOnCellClick((x, y) -> {
             if (!inPlacement) return;
-            if (fleetIndex >= fleet.length) { status.setText("La flotte a été libérée, veuillez cliquer sur «Terminer et préparer»."); return; }
-            if (placementPending) { status.setText("Le dernier placement est en cours de confirmation…"); return; }
+            if (fleetIndex >= fleet.length) { status.setText("La flotte a été libérée, veuillez cliquer sur «Terminer et préparer»"); return; }
+            if (placementPending) { status.setText("Le dernier placement est en cours de confirmationâ€¦"); return; }
             pendX = x; pendY = y; pendSize = fleet[fleetIndex]; pendOri = orientation;
             out.println("PLACE " + pendX + " " + pendY + " " + pendSize + " " + pendOri);
             placementPending = true;
-            status.setText("Envoyer l'emplacement：" + pendX + "," + pendY + " size=" + pendSize + " dir=" + pendOri);
+            status.setText("Envoyer l'emplacementï¼š" + pendX + "," + pendY + " size=" + pendSize + " dir=" + pendOri);
         });
 
         enemyBoard.setOnCellClick((x, y) -> {
             if (!yourTurn || inPlacement) return;
-            if (enemyBoard.isMarked(x, y)) { status.setText("Tu as déjà attaque ici。"); return; }
+            if (enemyBoard.isMarked(x, y)) { status.setText("Tu as déjà attaqué ici ! "); return; }
             out.println("SHOT " + x + " " + y);
         });
 
@@ -98,10 +99,10 @@ public class Client extends JFrame {
 
     private static String orientationDesc(char o) {
         return switch (o) {
-            case 'H' -> "H (上)";
-            case 'B' -> "B (下)";
-            case 'G' -> "G (左)";
-            default -> "D (右)";
+            case 'H' -> "H (ä¸Š)";
+            case 'B' -> "B (ä¸‹)";
+            case 'G' -> "G (å·¦)";
+            default -> "D (å�³)";
         };
     }
 
@@ -113,8 +114,25 @@ public class Client extends JFrame {
     }
 
     private void connectAndRun() throws IOException {
-        String host = "2.tcp.cpolar.top";
-        int port = 15442;
+        String host = "localhost";
+        int port = 12345;
+        
+     // CHOIX DU MODE
+        Object[] modes = {"Joueur vs Joueur (PVP)", "Joueur vs IA (PVE)"};
+        int choice = JOptionPane.showOptionDialog(
+                this,
+                "Choisissez un mode :",
+                "Mode de jeu",
+                JOptionPane.DEFAULT_OPTION,
+                JOptionPane.QUESTION_MESSAGE,
+                null,
+                modes,
+                modes[0]
+        );
+
+        if (choice == 1) mode = "PVE";
+        else mode = "PVP";
+        
         String nick = JOptionPane.showInputDialog(this, "Entrez votre pseudo:", "PLAYER");
         if (nick == null || nick.isBlank()) nick = "PLAYER";
 
@@ -126,6 +144,10 @@ public class Client extends JFrame {
         t.setDaemon(true);
         t.start();
 
+        // ENVOYER LE MODE EN PREMIER
+        out.println("MODE " + mode);
+
+        // ENVOYER LE NOM
         out.println("NAME " + nick);
     }
 
@@ -144,9 +166,9 @@ public class Client extends JFrame {
     private void handleServer(String m) {
         System.out.println("[SERVER] " + m);
 
-        if (m.startsWith("WELCOME") || m.startsWith("HELLO")) { status.setText("Connecté au serveur, en attente de match…"); return; }
-        if (m.startsWith("WAITING")) { status.setText("Attendez que les adversaires se joignent…"); return; }
-        if (m.startsWith("MATCHED")) { status.setText("Match réussi：" + m.substring("MATCHED".length()).trim()); return; }
+        if (m.startsWith("WELCOME") || m.startsWith("HELLO")) { status.setText("Connecté au serveur, en attente de match..."); return; }
+        if (m.startsWith("WAITING")) { status.setText("Attendez que les adversaires se joignent...¦"); return; }
+        if (m.startsWith("MATCHED")) { status.setText("Adversaire trouvé !" + m.substring("MATCHED".length()).trim()); return; }
 
         if (m.startsWith("BOARD_SIZE")) {
             String[] ps = m.split("\\s+");
@@ -162,12 +184,12 @@ public class Client extends JFrame {
             inPlacement = true;
             fleetIndex = 0;
             placementPending = false;
-            status.setText("Veuillez placer les flottes sur l'échiquier de gauche dans l'ordre。");
+            status.setText("Veuillez placer les flottes sur l'échiquier de gauche dans l'ordre.");
             return;
         }
 
         if (m.startsWith("RESET_OK")) {
-            // 服务器已同步重置
+            // æœ�åŠ¡å™¨å·²å�Œæ­¥é‡�ç½®
             inPlacement = true;
             status.setText("Réinitialisez, veuillez repositionner le premier cuirassé");
             return;
@@ -190,15 +212,15 @@ public class Client extends JFrame {
 
         if (m.startsWith("ERROR")) {
             placementPending = false;
-            status.setText("Erreur de serveur：" + m);
+            status.setText("Erreur de serveur:" + m);
             return;
         }
 
-        if (m.startsWith("GAME_START")) { inPlacement = false; status.setText("Le jeu commence！"); return; }
-        if (m.startsWith("YOUR_TURN")) { yourTurn = true; status.setText("a vous jouer！"); return; }
-        if (m.startsWith("OPPONENT_TURN")) { yourTurn = false; status.setText("le tour de l'adversaire…"); return; }
+        if (m.startsWith("GAME_START")) { inPlacement = false; status.setText("Le jeu commence !"); return; }
+        if (m.startsWith("YOUR_TURN")) { yourTurn = true; status.setText("C'est votre tour !"); return; }
+        if (m.startsWith("OPPONENT_TURN")) { yourTurn = false; status.setText("C'est au tour de l'adversaire !"); return; }
 
-        // ⛔️ 摆放阶段忽略一切命中/脱靶渲染，避免“未开战先出现蓝点”的假象
+        // â›”ï¸� æ‘†æ”¾é˜¶æ®µå¿½ç•¥ä¸€åˆ‡å‘½ä¸­/è„±é�¶æ¸²æŸ“ï¼Œé�¿å…�â€œæœªå¼€æˆ˜å…ˆå‡ºçŽ°è“�ç‚¹â€�çš„å�‡è±¡
         if (inPlacement) return;
 
         if (m.startsWith("RESULT")) {
@@ -208,10 +230,10 @@ public class Client extends JFrame {
                 int x = Integer.parseInt(ps[2]);
                 int y = Integer.parseInt(ps[3]);
                 switch (typ) {
-                    case "ALREADY" -> status.setText("Cet endroit a été touché。");
-                    case "MISS" -> { enemyBoard.markMiss(x, y); status.setText("manquer ("+x+","+y+")"); }
-                    case "HIT"  -> { enemyBoard.markHit(x, y);  status.setText("frapper ("+x+","+y+")！"); }
-                    case "SUNK" -> { enemyBoard.markHit(x, y);  status.setText("frapper et couler！"); }
+                    case "ALREADY" -> status.setText("Cet endroit a déjà été visé");
+                    case "MISS" -> { enemyBoard.markMiss(x, y); status.setText("manqué ("+x+","+y+") ! "); }
+                    case "HIT"  -> { enemyBoard.markHit(x, y);  status.setText("touché ("+x+","+y+") ! "); }
+                    case "SUNK" -> { enemyBoard.markHit(x, y);  status.setText("touché et coulé ! "); }
                 }
             }
             return;
@@ -232,9 +254,9 @@ public class Client extends JFrame {
             return;
         }
 
-        if (m.startsWith("YOU_WIN")) { yourTurn = false; JOptionPane.showMessageDialog(this,"你赢了！"); status.setText("游戏结束：你赢了"); return; }
-        if (m.startsWith("YOU_LOSE")) { yourTurn = false; JOptionPane.showMessageDialog(this,"你输了。"); status.setText("游戏结束：你输了"); return; }
-        if (m.startsWith("OPPONENT_DISCONNECTED")) { JOptionPane.showMessageDialog(this,"对手断开，你胜利。"); status.setText("游戏结束：对手断线"); }
+        if (m.startsWith("YOU_WIN")) { yourTurn = false; JOptionPane.showMessageDialog(this,"ä½ èµ¢äº†ï¼�"); status.setText("æ¸¸æˆ�ç»“æ�Ÿï¼šä½ èµ¢äº†"); return; }
+        if (m.startsWith("YOU_LOSE")) { yourTurn = false; JOptionPane.showMessageDialog(this,"ä½ è¾“äº†ã€‚"); status.setText("æ¸¸æˆ�ç»“æ�Ÿï¼šä½ è¾“äº†"); return; }
+        if (m.startsWith("OPPONENT_DISCONNECTED")) { JOptionPane.showMessageDialog(this,"å¯¹æ‰‹æ–­å¼€ï¼Œä½ èƒœåˆ©ã€‚"); status.setText("æ¸¸æˆ�ç»“æ�Ÿï¼šå¯¹æ‰‹æ–­çº¿"); }
     }
 
     private static class BoardPanel extends JPanel {
@@ -315,7 +337,7 @@ public class Client extends JFrame {
             try {
                 ui.connectAndRun();
             } catch (IOException e) {
-                JOptionPane.showMessageDialog(ui, "ne peut pas atteindre le serveur：" + e.getMessage());
+                JOptionPane.showMessageDialog(ui, "ne peut pas atteindre le serveur : " + e.getMessage());
                 System.exit(1);
             }
         });

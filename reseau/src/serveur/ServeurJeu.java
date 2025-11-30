@@ -9,13 +9,13 @@ import java.util.List;
 
 /**
  * Serveur PVP concurrent (TCP).
- * - Chaque connexion -> ClientHandler线程
- * - 通过 SessionJeu 的等待队列撮合两名玩家
+ * - Chaque connexion -> ClientHandlerçº¿ç¨‹
+ * - é€šè¿‡ SessionJeu çš„ç­‰å¾…é˜Ÿåˆ—æ’®å�ˆä¸¤å��çŽ©å®¶
  */
 public class ServeurJeu {
     public static final int PORT = 12345;
 
-    // 可选：仅用于统计/管理
+    // option:pour statistique/gestion
     private static final List<ClientHandler> clients =
             Collections.synchronizedList(new LinkedList<>());
 

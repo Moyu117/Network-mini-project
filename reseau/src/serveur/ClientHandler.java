@@ -49,6 +49,7 @@ public class ClientHandler implements Runnable {
                 line = line.trim();
                 if (line.isEmpty()) continue;
 
+                /*
                 if (line.toUpperCase().startsWith("NAME")) {
                     // NAME <nick>
                     String[] parts = line.split("\\s+", 2);
@@ -60,6 +61,47 @@ public class ClientHandler implements Runnable {
                         SessionJeu.enqueue(this);
                     } else {
                         sendMessage("ERROR Name required. Usage: NAME <nickname>");
+                    }
+                    continue;
+                }
+                */
+                
+                if (line.toUpperCase().startsWith("MODE")) {
+                    // MODE PVE  ou MODE PVP
+                    String[] toks = line.split("\\s+");
+                    if (toks.length >= 2 && toks[1].equalsIgnoreCase("PVE")) {
+                        // démarrage PVE immédiat : construire la SessionJeu solo
+                        sendMessage("HELLO (PVE mode)");
+                        // crée et attache la session PVE
+                        SessionJeu s = new SessionJeu(this);
+                        this.setSession(s);
+                        // la SessionJeu envoie PLACE_FLEET / BOARD_SIZE etc.
+                    } else {
+                        sendMessage("HELLO (PVP mode)");
+                        // se placer dans la file d'attente
+                        SessionJeu.enqueue(this);
+                    }
+                    continue;
+                }
+
+                if (line.toUpperCase().startsWith("NAME")) {
+                    // NAME <nick> [IA]
+                    String[] parts = line.split("\\s+");
+                    if (parts.length >= 2 && !parts[1].trim().isEmpty()) {
+                        nomJoueur = parts[1].trim();
+                        sendMessage("HELLO " + nomJoueur);
+                        sendMessage("Type SHOT x y when your game starts.");
+                        // Si le client a fait "NAME <nick> IA" -> démarrer PVE immédiatement
+                        if (parts.length >= 3 && parts[2].equalsIgnoreCase("IA")) {
+                            // démarrage PVE
+                            SessionJeu s = new SessionJeu(this);
+                            this.setSession(s);
+                        } else {
+                            // sinon PVP comme avant
+                            SessionJeu.enqueue(this);
+                        }
+                    } else {
+                        sendMessage("ERROR Name required. Usage: NAME <nickname> [IA]");
                     }
                     continue;
                 }
@@ -76,6 +118,7 @@ public class ClientHandler implements Runnable {
                 } else {
                     sendMessage("WAITING for opponent...");
                 }
+                
             }
         } catch (IOException e) {
             // deconnetion
