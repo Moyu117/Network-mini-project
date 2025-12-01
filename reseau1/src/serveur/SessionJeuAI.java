@@ -216,7 +216,7 @@ public class SessionJeuAI {
         }
     }
 
-    // ⏱ 结束游戏并发时间
+    // ⏱ heure de simultanéité de fin de partie
     private void finishGame(boolean humanWins) {
         if (gameOver) return;
         gameOver = true;
@@ -236,7 +236,7 @@ public class SessionJeuAI {
 
     public synchronized void onDisconnect(ClientHandler who) {
         if (gameOver) return;
-        // 断线视为失败
+        // La déconnexion est considérée comme un échec
         finishGame(false);
     }
 }

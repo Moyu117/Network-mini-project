@@ -170,7 +170,7 @@ public class Client extends JFrame {
         return p;
     }
 
-    // ========= 这里加入 UDP 认证 =========
+    // ========= Authentification UDP =========
     private boolean doUdpIdentification(String host, int udpPort, String nick) {
         try (DatagramSocket ds = new DatagramSocket()) {
             ds.setSoTimeout(3000); // 3s de timeout
@@ -224,13 +224,13 @@ public class Client extends JFrame {
                 null, opts, opts[0]);
         chosenMode = (sel == 1) ? "AI" : "PVP";
 
-        // 1) UDP 认证
+        // 1) UDP dentification
         if (!doUdpIdentification(host, portUDP, nick)) {
-            // 认证失败直接结束
+            //L'authentification échoue et se termine immédiatement
             return;
         }
 
-        // 2) TCP 连接 + protocole de jeu
+        // 2) TCP connecter + protocole de jeu
         socket = new Socket(host, portTCP);
         in = new BufferedReader(new InputStreamReader(socket.getInputStream(), "UTF-8"));
         out = new PrintWriter(socket.getOutputStream(), true);
