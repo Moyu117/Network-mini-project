@@ -33,7 +33,7 @@ public class Client extends JFrame {
     private final JTextField chatInput = new JTextField();
     private final JButton chatSend     = new JButton("Envoyer");
 
-    // État
+    // Etat
     private int boardSize = 10;
     private boolean inPlacement = true;
     private boolean yourTurn = false;
@@ -54,7 +54,7 @@ public class Client extends JFrame {
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLayout(new BorderLayout());
 
-        // Barre supérieure
+        // Barre sup�rieure
         JPanel top = new JPanel(new FlowLayout(FlowLayout.LEFT));
         top.add(status);
         top.add(rotateBtn);
@@ -80,13 +80,13 @@ public class Client extends JFrame {
             placedCount = 0;
             serverPlacementComplete = false;
             placementPending = false;
-            status.setText("Placement réinitialisé. Placez le premier navire.");
+            status.setText("Placement reinitialise. Placez le premier navire.");
             if (out != null) out.println("RESET");
         });
 
         readyBtn.addActionListener(e -> {
             if (inPlacement && (fleetIndex >= fleet.length || serverPlacementComplete)) out.println("READY");
-            else status.setText("Il y a encore des navires non placés.");
+            else status.setText("Il y a encore des navires non places.");
         });
 
         // Centre : plateaux + chat
@@ -118,22 +118,22 @@ public class Client extends JFrame {
         myBoard.setOnCellClick((x, y) -> {
             if (!inPlacement || serverPlacementComplete) return;
             if (fleetIndex >= fleet.length) {
-                status.setText("Tous les navires sont placés. Cliquez « Terminer et prêt ».");
+                status.setText("Tous les navires sont places. Cliquez � Terminer et pret�.");
                 return;
             }
             if (placementPending) {
-                status.setText("Dernier placement en attente de confirmation…");
+                status.setText("Dernier placement en attente de confirmation...");
                 return;
             }
             pendX = x; pendY = y; pendSize = fleet[fleetIndex]; pendOri = orientation;
             out.println("PLACE " + pendX + " " + pendY + " " + pendSize + " " + pendOri);
             placementPending = true;
-            status.setText("Placement envoyé : (" + pendX + "," + pendY + "), taille=" + pendSize + ", dir=" + pendOri);
+            status.setText("Placement envoye : (" + pendX + "," + pendY + "), taille=" + pendSize + ", dir=" + pendOri);
         });
 
         enemyBoard.setOnCellClick((x, y) -> {
             if (!yourTurn || inPlacement) return;
-            if (enemyBoard.isMarked(x, y)) { status.setText("Case déjà visée."); return; }
+            if (enemyBoard.isMarked(x, y)) { status.setText("Case deja visee."); return; }
             out.println("SHOT " + x + " " + y);
         });
 
@@ -189,19 +189,19 @@ public class Client extends JFrame {
             String rep = new String(resp.getData(), 0, resp.getLength(), StandardCharsets.UTF_8).trim();
 
             if (rep.startsWith("IDENT_OK")) {
-                appendChat("Système", "Identification UDP réussie pour " + nick + ".");
+                appendChat("Syst�me", "Identification UDP reussie pour " + nick + ".");
                 return true;
             } else {
-                appendChat("Système", "Échec de l’identification UDP : " + rep);
+                appendChat("Syst�me", "echec de l'identification UDP : " + rep);
                 JOptionPane.showMessageDialog(this,
-                        "Identification UDP refusée : " + rep,
+                        "Identification UDP refusee : " + rep,
                         "Erreur UDP",
                         JOptionPane.ERROR_MESSAGE);
                 return false;
             }
         } catch (Exception e) {
             JOptionPane.showMessageDialog(this,
-                    "Erreur lors de l’identification UDP : " + e.getMessage(),
+                    "Erreur lors de l'identification UDP : " + e.getMessage(),
                     "Erreur UDP",
                     JOptionPane.ERROR_MESSAGE);
             return false;
@@ -241,7 +241,7 @@ public class Client extends JFrame {
 
         out.println("NAME " + nick);
         out.println("MODE " + chosenMode);
-        appendChat("Système", "Mode sélectionné : " + chosenMode);
+        appendChat("Syst�me", "Mode s�lectionn� : " + chosenMode);
     }
 
     private void readLoop() {
@@ -252,7 +252,7 @@ public class Client extends JFrame {
                 SwingUtilities.invokeLater(() -> handleServer(msg));
             }
         } catch (IOException e) {
-            SwingUtilities.invokeLater(() -> JOptionPane.showMessageDialog(this, "Déconnecté du serveur."));
+            SwingUtilities.invokeLater(() -> JOptionPane.showMessageDialog(this, "D�connect� du serveur."));
         }
     }
 
@@ -268,23 +268,23 @@ public class Client extends JFrame {
             return;
         }
 
-        // Durée de la partie
+        // Dur�e de la partie
         if (m.startsWith("GAME_TIME")) {
             String[] ps = m.split("\\s+");
             if (ps.length >= 2) {
                 try {
                     int sec = Integer.parseInt(ps[1]);
-                    String txt = "Durée de la partie : " + sec + " s";
+                    String txt = "Duree de la partie : " + sec + " s";
                     status.setText(txt);
-                    appendChat("Système", txt);
+                    appendChat("Systeme", txt);
                 } catch (NumberFormatException ignored) {}
             }
             return;
         }
 
-        if (m.startsWith("WELCOME") || m.startsWith("HELLO")) { status.setText("Connecté. En attente d’un adversaire…"); return; }
-        if (m.startsWith("WAITING")) { status.setText("En attente d’un adversaire…"); return; }
-        if (m.startsWith("MATCHED")) { status.setText("Apparié : " + m.substring("MATCHED".length()).trim()); return; }
+        if (m.startsWith("WELCOME") || m.startsWith("HELLO")) { status.setText("Connecte. En attente d'un adversaire..."); return; }
+        if (m.startsWith("WAITING")) { status.setText("En attente d'un adversaire..."); return; }
+        if (m.startsWith("MATCHED")) { status.setText("Appaire : " + m.substring("MATCHED".length()).trim()); return; }
 
         if (m.startsWith("BOARD_SIZE")) {
             String[] ps = m.split("\\s+");
@@ -305,7 +305,7 @@ public class Client extends JFrame {
 
         if (m.startsWith("RESET_OK")) {
             inPlacement = true; fleetIndex = 0; placedCount = 0; serverPlacementComplete = false;
-            status.setText("Placement réinitialisé. Placez le premier navire.");
+            status.setText("Placement reinitialise. Placez le premier navire.");
             return;
         }
 
@@ -314,18 +314,18 @@ public class Client extends JFrame {
             if (inPlacement && fleetIndex < fleet.length && pendSize == Integer.parseInt(m.split("\\s+")[1])) {
                 myBoard.placeShip(pendX, pendY, pendSize, pendOri);
                 fleetIndex++;
-                status.setText(fleetIndex < fleet.length ? ("Navire placé. Prochain : taille " + fleet[fleetIndex]) :
-                        "Tous les navires sont placés. Cliquez « Terminer et prêt ».");
+                status.setText(fleetIndex < fleet.length ? ("Navire place. Prochain : taille " + fleet[fleetIndex]) :
+                        "Tous les navires sont places. Cliquez � Terminer et pret �.");
             }
             return;
         }
 
-        if (m.startsWith("PLACEMENT_DONE")) { serverPlacementComplete = true; status.setText("Prêt côté serveur : en attente de l’adversaire…"); return; }
+        if (m.startsWith("PLACEMENT_DONE")) { serverPlacementComplete = true; status.setText("Pret cote serveur : en attente de l'adversaire..."); return; }
         if (m.startsWith("ERROR")) { placementPending = false; status.setText("Erreur serveur : " + m); return; }
 
-        if (m.startsWith("GAME_START")) { inPlacement = false; status.setText("Partie démarrée !"); return; }
-        if (m.startsWith("YOUR_TURN")) { yourTurn = true; status.setText("À vous de jouer ! Cliquez sur le plateau adverse."); return; }
-        if (m.startsWith("OPPONENT_TURN")) { yourTurn = false; status.setText("Tour de l’adversaire…"); return; }
+        if (m.startsWith("GAME_START")) { inPlacement = false; status.setText("Partie d�marree !"); return; }
+        if (m.startsWith("YOUR_TURN")) { yourTurn = true; status.setText("A vous de jouer ! Cliquez sur le plateau adverse."); return; }
+        if (m.startsWith("OPPONENT_TURN")) { yourTurn = false; status.setText("Tour de l'adversaire..."); return; }
 
         if (inPlacement) return;
 
@@ -336,10 +336,10 @@ public class Client extends JFrame {
                 int x = Integer.parseInt(ps[2]);
                 int y = Integer.parseInt(ps[3]);
                 switch (typ) {
-                    case "ALREADY" -> status.setText("Case déjà visée.");
-                    case "MISS" -> { enemyBoard.markMiss(x, y); status.setText("Manqué ("+x+","+y+")."); }
-                    case "HIT"  -> { enemyBoard.markHit(x, y);  status.setText("Touché ("+x+","+y+") !"); }
-                    case "SUNK" -> { enemyBoard.markHit(x, y);  status.setText("Touché et coulé !"); }
+                    case "ALREADY" -> status.setText("Case d�j� vis�e.");
+                    case "MISS" -> { enemyBoard.markMiss(x, y); status.setText("Manque ("+x+","+y+")."); }
+                    case "HIT"  -> { enemyBoard.markHit(x, y);  status.setText("Touche ("+x+","+y+") !"); }
+                    case "SUNK" -> { enemyBoard.markHit(x, y);  status.setText("Touche et coule !"); }
                 }
             }
             return;
@@ -360,9 +360,9 @@ public class Client extends JFrame {
             return;
         }
 
-        if (m.startsWith("YOU_WIN"))  { yourTurn = false; JOptionPane.showMessageDialog(this,"Victoire !"); status.setText("Partie terminée : vous avez gagné"); return; }
-        if (m.startsWith("YOU_LOSE")) { yourTurn = false; JOptionPane.showMessageDialog(this,"Défaite.");  status.setText("Partie terminée : vous avez perdu");  return; }
-        if (m.startsWith("OPPONENT_DISCONNECTED")) { JOptionPane.showMessageDialog(this,"L’adversaire s’est déconnecté. Victoire par forfait."); status.setText("Partie terminée : adversaire déconnecté"); }
+        if (m.startsWith("YOU_WIN"))  { yourTurn = false; JOptionPane.showMessageDialog(this,"Victoire !"); status.setText("Partie terminee : vous avez gagne"); return; }
+        if (m.startsWith("YOU_LOSE")) { yourTurn = false; JOptionPane.showMessageDialog(this,"Defaite.");  status.setText("Partie terminee : vous avez perdu");  return; }
+        if (m.startsWith("OPPONENT_DISCONNECTED")) { JOptionPane.showMessageDialog(this,"L'adversaire s'est deconnecte. Victoire par forfait."); status.setText("Partie terminee : adversaire deconnecte"); }
     }
 
     // ===== Plateau graphique =====

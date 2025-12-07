@@ -24,7 +24,7 @@ public class SessionJeu {
     private final Map<ClientHandler, Map<Integer, Integer>> remaining = new HashMap<>();
     private final Set<ClientHandler> readySet = new HashSet<>();
 
-    // ⏱ Chronomètre
+    // Chronomètre
     private long startTimeMillis = -1;
     private long endTimeMillis   = -1;
 
@@ -72,7 +72,7 @@ public class SessionJeu {
         String trimmed = line.trim();
         if (trimmed.isEmpty()) return;
 
-        // 🗨️ Chat
+        // Chat
         if (trimmed.toUpperCase().startsWith("CHAT")) {
             String text = trimmed.length() > 4 ? trimmed.substring(5) : "";
             opponentOf(from).sendMessage("CHAT_FROM " + from.getNomJoueur() + " " + text);
@@ -169,7 +169,7 @@ public class SessionJeu {
         if (readySet.contains(j1) && readySet.contains(j2) && phase == Phase.PLACEMENT) {
             phase = Phase.RUNNING;
             current = new Random().nextBoolean() ? j1 : j2;
-            startTimeMillis = System.currentTimeMillis(); // ⏱ 开始计时
+            startTimeMillis = System.currentTimeMillis(); // â�± å¼€å§‹è®¡æ—¶
             broadcast("GAME_START");
             promptTurn();
         }
@@ -186,7 +186,7 @@ public class SessionJeu {
     }
 
     /**
-     * 命中继续攻击：只有 MISS 才换手。
+     * å‘½ä¸­ç»§ç»­æ”»å‡»ï¼šå�ªæœ‰ MISS æ‰�æ�¢æ‰‹ã€‚
      */
     private void processShot(ClientHandler shooter, int x, int y) {
         ClientHandler defender = opponentOf(shooter);
@@ -198,20 +198,20 @@ public class SessionJeu {
             case "ALREADY":
                 shooter.sendMessage("RESULT ALREADY " + x + " " + y);
                 defender.sendMessage("OPPONENT_ALREADY " + x + " " + y);
-                // 回合不变
+                // å›žå�ˆä¸�å�˜
                 return;
 
             case "MISS":
                 shooter.sendMessage("RESULT MISS " + x + " " + y);
                 defender.sendMessage("OPPONENT_MISS " + x + " " + y);
-                current = defender; // 换手
+                current = defender; // æ�¢æ‰‹
                 promptTurn();
                 break;
 
             case "HIT":
                 shooter.sendMessage("RESULT HIT " + x + " " + y);
                 defender.sendMessage("OPPONENT_HIT " + x + " " + y);
-                // 命中：不换 current，再发一次回合提示表示可以继续
+                // å‘½ä¸­ï¼šä¸�æ�¢ currentï¼Œå†�å�‘ä¸€æ¬¡å›žå�ˆæ��ç¤ºè¡¨ç¤ºå�¯ä»¥ç»§ç»­
                 promptTurn();
                 break;
 
@@ -222,13 +222,13 @@ public class SessionJeu {
                     finishGame(shooter, defender);
                     return;
                 }
-                // 击沉但未结束：命中方继续
+                // å‡»æ²‰ä½†æœªç»“æ�Ÿï¼šå‘½ä¸­æ–¹ç»§ç»­
                 promptTurn();
                 break;
         }
     }
 
-    // ⏱ 结束游戏并广播时间
+    // â�± ç»“æ�Ÿæ¸¸æˆ�å¹¶å¹¿æ’­æ—¶é—´
     private void finishGame(ClientHandler winner, ClientHandler loser) {
         if (gameOver) return;
         gameOver = true;
@@ -249,7 +249,7 @@ public class SessionJeu {
         if (gameOver) return;
         ClientHandler opp = opponentOf(who);
         opp.sendMessage("OPPONENT_DISCONNECTED");
-        // 断线也视为一方胜利，计时到此为止
+        // æ–­çº¿ä¹Ÿè§†ä¸ºä¸€æ–¹èƒœåˆ©ï¼Œè®¡æ—¶åˆ°æ­¤ä¸ºæ­¢
         finishGame(opp, who);
     }
 }

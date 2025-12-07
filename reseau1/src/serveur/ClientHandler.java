@@ -13,7 +13,8 @@ public class ClientHandler implements Runnable {
     private volatile String nomJoueur = "Player";
     private volatile SessionJeu session;     // PVP
     private volatile SessionJeuAI sessionAI; // IA
-    private volatile String wantedMode = "PVP"; // PVP par défaut
+    private volatile String wantedMode = "PVP"; // PVP par defaut
+    private boolean hasJoinedQueue = false;
 
     public ClientHandler(Socket socket) throws IOException {
         this.socket = socket;
@@ -37,7 +38,7 @@ public class ClientHandler implements Runnable {
     public void run() {
         sendMessage("WELCOME Bataille-Navale");
         sendMessage("Veuillez vous identifier via UDP avant de jouer (IDENT <pseudo>).");
-        sendMessage("Puis sur TCP : NAME <pseudo> et MODE PVP | MODE AI (par défaut PVP).");
+        sendMessage("Puis sur TCP : NAME <pseudo> et MODE PVP | MODE AI (par defaut PVP).");
 
         try {
             String line;
@@ -71,7 +72,7 @@ public class ClientHandler implements Runnable {
                     if (parts.length >= 2 && !parts[1].trim().isEmpty()) {
                         nomJoueur = parts[1].trim();
 
-                        // ⚠️ Vérifier que ce pseudo a été identifié en UDP
+                        // âš ï¸� VÃ©rifier que ce pseudo a Ã©tÃ© identifiÃ© en UDP
                         if (!IdentificationUDPServer.isAuthorizedNickname(nomJoueur)) {
                             sendMessage("ERROR Vous devez d'abord vous identifier via UDP (IDENT " + nomJoueur + ").");
                             sendMessage("BYE");
@@ -92,7 +93,7 @@ public class ClientHandler implements Runnable {
                     break;
                 }
 
-                // Déléguer la commande à la session actuelle (IA ou PVP)
+                // DÃ©lÃ©guer la commande Ã  la session actuelle (IA ou PVP)
                 if (sessionAI != null) {
                     sessionAI.handleCommand(this, line);
                 } else if (session != null) {
@@ -102,7 +103,7 @@ public class ClientHandler implements Runnable {
                 }
             }
         } catch (IOException e) {
-            // déconnexion
+            // dÃ©connexion
         } finally {
             if (session != null) session.onDisconnect(this);
             if (sessionAI != null) sessionAI.onDisconnect(this);
@@ -111,6 +112,9 @@ public class ClientHandler implements Runnable {
     }
 
     private void tryStartQueueOrAI() {
+    	if (hasJoinedQueue) return; // évite la double queue
+        hasJoinedQueue = true;
+        
         if ("AI".equalsIgnoreCase(wantedMode)) {
             SessionJeuAI.startFor(this);
         } else {

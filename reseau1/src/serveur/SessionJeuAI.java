@@ -9,8 +9,8 @@ import java.util.Set;
 
 /**
  * Session VS IA
- * Règle complète : si le tir touche ou coule, le tireur rejoue.
- * Chronomètre : du GAME_START jusqu’à la fin de la partie.
+ * RÃ¨gle complÃ¨te : si le tir touche ou coule, le tireur rejoue.
+ * ChronomÃ¨tre : du GAME_START jusquâ€™Ã  la fin de la partie.
  */
 public class SessionJeuAI {
     private final ClientHandler human;
@@ -29,7 +29,7 @@ public class SessionJeuAI {
     private final JoueurIA ia = new JoueurIA();
     private final Set<String> aiShots = new HashSet<>();
 
-    // ⏱ Chronomètre
+    // Chronomètre
     private long startTimeMillis = -1;
     private long endTimeMillis   = -1;
 
@@ -59,7 +59,7 @@ public class SessionJeuAI {
         String[] ps = trimmed.split("\\s+");
         String cmd = ps[0].toUpperCase();
 
-        // Chat vers IA：忽略或以后扩展
+        // Chat vers IAï¼šå¿½ç•¥æˆ–ä»¥å�Žæ‰©å±•
         if (cmd.equals("CHAT")) return;
 
         if (!gameStarted) {
@@ -123,7 +123,7 @@ public class SessionJeuAI {
     private void startBattleIfReady() {
         if (placementDoneHuman) {
             gameStarted = true;
-            startTimeMillis = System.currentTimeMillis(); // ⏱ 开始计时
+            startTimeMillis = System.currentTimeMillis(); // â�± å¼€å§‹è®¡æ—¶
             humanTurn = r.nextBoolean();
             human.sendMessage("GAME_START");
             if (humanTurn) {
@@ -148,7 +148,7 @@ public class SessionJeuAI {
                 break;
             case "HIT":
                 human.sendMessage("RESULT HIT " + x + " " + y);
-                // 命中：继续
+                // å‘½ä¸­ï¼šç»§ç»­
                 humanTurn = true;
                 human.sendMessage("YOUR_TURN");
                 break;
@@ -190,7 +190,7 @@ public class SessionJeuAI {
             String res = humanBoard.tirer(x, y);
             switch (res) {
                 case "ALREADY":
-                    aiContinues = true; // 理论不会发生
+                    aiContinues = true; // ç�†è®ºä¸�ä¼šå�‘ç”Ÿ
                     break;
                 case "MISS":
                     human.sendMessage("OPPONENT_MISS " + x + " " + y);
@@ -200,7 +200,7 @@ public class SessionJeuAI {
                     break;
                 case "HIT":
                     human.sendMessage("OPPONENT_HIT " + x + " " + y);
-                    aiContinues = true;   // 命中连射
+                    aiContinues = true;   // å‘½ä¸­è¿žå°„
                     humanTurn = false;
                     break;
                 case "SUNK":
@@ -216,7 +216,7 @@ public class SessionJeuAI {
         }
     }
 
-    // ⏱ heure de simultanéité de fin de partie
+    // â�± heure de simultanÃ©itÃ© de fin de partie
     private void finishGame(boolean humanWins) {
         if (gameOver) return;
         gameOver = true;
@@ -236,7 +236,7 @@ public class SessionJeuAI {
 
     public synchronized void onDisconnect(ClientHandler who) {
         if (gameOver) return;
-        // La déconnexion est considérée comme un échec
+        // La dÃ©connexion est considÃ©rÃ©e comme un Ã©chec
         finishGame(false);
     }
 }
